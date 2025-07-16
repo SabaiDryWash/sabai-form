@@ -217,7 +217,7 @@ async function submitForm() {
     totalPrice: document.getElementById('totalPrice').innerText
   };
 
-  const response = await fetch("https://your-vercel-project.vercel.app/api/order", {
+  const response = await fetch("https://sabai-form-vka67iqbk-sabais-projects.vercel.app/api/order", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
