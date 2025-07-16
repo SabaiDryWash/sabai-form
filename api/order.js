@@ -2,12 +2,12 @@
 // ⭐️ ต้องตั้ง Environment Variables ใน Vercel ชื่อ LINE_TOKEN, ADMIN_GROUP_ID ก่อน deploy!
 
 module.exports = async function handler(req, res) {
-  // ⭐️ อนุญาตแค่ POST เท่านั้น (ป้องกัน request แปลกๆ)
+  console.log("API CALLED:", req.method); // Debug: เช็คว่า function ถูกเรียก
   if (req.method !== "POST")
     return res.status(405).json({ result: "error", message: "Method not allowed" });
 
-  // รับข้อมูลที่ส่งมาจากฟอร์ม (JSON)
-  const data = req.body; // ข้อมูลลูกค้า, ออเดอร์, พิกัด, ฯลฯ
+  const data = req.body;
+  console.log("DATA:", data); // Debug: เช็คข้อมูลที่รับเข้ามา
 
   // สร้าง Flex Message (LINE)
   const flexMessage = {
@@ -37,7 +37,6 @@ module.exports = async function handler(req, res) {
             action: {
               type: "uri",
               label: "ดูแผนที่",
-              // ⭐️ เปิดพิกัดลูกค้าใน Google Maps
               uri: `https://maps.google.com/?q=${data.latitude},${data.longitude}`
             }
           }
@@ -48,29 +47,24 @@ module.exports = async function handler(req, res) {
 
   // ⭐️ ส่ง Flex Message ไป 2 ที่ (1. user ที่กรอกฟอร์ม, 2. กลุ่มแอดมิน)
   for (const to of [data.lineUserId, process.env.ADMIN_GROUP_ID]) {
-    // ส่ง HTTP POST ไปยัง LINE Messaging API (push)
-    await fetch("https://api.line.me/v2/bot/message/push", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // ⭐️ ต้องใช้ LINE_TOKEN (Channel access token) ที่ได้จาก LINE Developers
-        "Authorization": `Bearer ${process.env.LINE_TOKEN}`
-      },
-      body: JSON.stringify({
-        to,                // ส่งไปยัง userId หรือ groupId
-        messages: [flexMessage] // ส่ง Flex Message ที่สร้างไว้
-      })
-    });
+    try {
+      const resp = await fetch("https://api.line.me/v2/bot/message/push", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.LINE_TOKEN}`
+        },
+        body: JSON.stringify({
+          to,
+          messages: [flexMessage]
+        })
+      });
+      const result = await resp.json();
+      console.log(`Push to ${to}:`, result); // Debug: log response LINE
+    } catch (err) {
+      console.error(`Push to ${to} error:`, err);
+    }
   }
 
-  // ⭐️ ส่งสถานะกลับไปให้ frontend (แจ้งว่าสำเร็จ)
   res.status(200).json({ result: "success" });
-}
-
-export default async function handler(req, res) {
-  console.log("API CALLED:", req.method);
-  if (req.method !== "POST")
-    return res.status(405).json({ result: "error", message: "Method not allowed" });
-  console.log("DATA:", req.body);
-  // ...
-}
+};
