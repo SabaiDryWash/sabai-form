@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sabai Dry Wash Service</title>
+
+  <!-- ลิงก์ไฟล์ CSS -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- โหลดฟอนต์ Kanit จาก Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script>
+  async function initLiff() {
+    await liff.init({ liffId: "2007741048-QaAmRdE0" }); // 🔁 ใส่ LIFF ID ที่ได้มา
+    if (!liff.isLoggedIn()) {
+      liff.login();
+    } else {
+      const profile = await liff.getProfile();
+      document.getElementById("lineUserId").value = profile.userId; // ต้องมี input ซ่อนเก็บ userId
+    }
+  }
+  window.onload = initLiff;
+</script>
+
+</head>
+
+<body>
+  <div class="container">
+    <form class="login-form" onsubmit="return submitForm()">
+      <input type="hidden" id="lineUserId">
+        <div class="fixed-header"></div>
+      <h2>Sabai Dry Wash Service</h2>
+
+      <!-- หมวด: ประเภทบริการ -->
+      <label>ประเภทบริการ</label>
+      <div class="service-options">
+        <button type="button" class="service-btn" onclick="selectService(this, 'ซัก')">ส่งซัก</button>
+        <button type="button" class="service-btn" onclick="selectService(this, 'อบ')">ส่งอบ</button>
+        <button type="button" class="service-btn" onclick="selectService(this, 'ซัก-อบ')">ส่งซัก-อบ</button>
+      </div>
+      <input type="hidden" name="serviceType" id="serviceType">
+
+      <!-- หมวด: ปริมาณผ้า -->
+      <label>ปริมาณผ้า</label>
+      <div class="weight-options">
+        <button type="button" class="weight-btn" onclick="selectWeight(this, '15KG')">15KG<br><small>(20–25 ชิ้น)</small></button>
+        <button type="button" class="weight-btn" onclick="selectWeight(this, '20KG')">20KG<br><small>(25–35 ชิ้น)</small></button>
+        <button type="button" class="weight-btn" onclick="selectWeight(this, '25KG')">25KG<br><small>(35–45 ชิ้น)</small></button>
+      </div>
+      <input type="hidden" name="weight" id="weight">
+
+      <!-- ประเภทน้ำ -->
+       <div id="waterOptions" class="water-options hidden">
+        <label>เลือกประเภทน้ำ</label>
+        <div class="water-buttons">
+            <button type="button" class="water-btn" onclick="selectWater(this, 'น้ำเย็น')">น้ำเย็น</button>
+            <button type="button" class="water-btn" onclick="selectWater(this, 'น้ำอุ่น')">น้ำอุ่น</button>
+            <button type="button" class="water-btn" onclick="selectWater(this, 'น้ำร้อน')">น้ำร้อน</button>
+        </div>
+        <input type="hidden" name="waterType" id="waterType">
+    </div>
+
+      <!-- หมวด: เลือกเวลาอบ (แสดงเฉพาะเมื่อเลือกบริการ “อบ”) -->
+      <div id="dryOptions" class="dry-options hidden">
+        <label>เลือกเวลาการอบ</label>
+        <div class="dry-buttons">
+          
+          <!-- ปุ่มอบร้อน -->
+          <button type="button" class="dry-btn reheat-btn" onclick="toggleDryHot(this)">อบร้อน</button>
+
+          <!-- ปุ่มควบคุมระดับเวลาอบ: 0, 7, 14, 21 -->
+          <div class="dry-level-control">
+            <button type="button" class="level-btn" onclick="changeDryLevel(-1)">−</button>
+            <span id="dryLevelDisplay" class="level-value">0</span>
+            <button type="button" class="level-btn" onclick="changeDryLevel(1)">+</button>
+          </div>
+          
+          <input type="hidden" name="dryLevel" id="dryLevel" value="0">
+        </div>
+      </div>
+
+      <!-- หัวข้อแผนที่ -->
+<label for="map">โปรดกำหนดจุดรับ-ส่งผ้า</label>
+
+<!-- แสดงแผนที่ -->
+<div id="map" style="width: 100%; height: 300px; margin-top: 10px;"></div>
+
+<!-- ซ่อนไว้เพื่อเก็บค่าพิกัดที่ปักหมุด -->
+<input type="hidden" id="latitude" name="latitude">
+<input type="hidden" id="longitude" name="longitude">
+
+<!-- กล่องแสดงระยะทาง -->
+<label for="distance">ระยะทางจากร้าน</label>
+<input type="text" id="distance" class="input-box" readonly placeholder="กำลังคำนวณ...">
+<input type="hidden" id="distanceKm">
+
+<!-- ค่าบริการรวม -->
+<div class="price-box">
+  ค่าบริการรวม: <span id="totalPrice">0</span> บาท
+</div>
+
+<!-- ชื่อผู้ใช้บริการ -->
+<label for="customerName" style="margin-top: 15px;">ชื่อผู้ใช้บริการ</label>
+<input type="text" id="customerName" name="customerName" placeholder="กรอกชื่อของคุณ" required>
+
+<!-- หมายเลขโทรศัพท์ -->
+<label for="phoneNumber">หมายเลขโทรศัพท์</label>
+<input
+  type="tel"
+  id="phoneNumber"
+  name="phoneNumber"
+  placeholder="08xxxxxxxx"
+  pattern="0[0-9]{8,9}"
+  maxlength="10"
+  required
+>
+
+      <!-- ปุ่มยืนยันส่งข้อมูล -->
+      <button type="submit">ยืนยัน</button>
+    </form>
+  </div>
+
+  <!-- ไฟล์ JavaScript -->
+  <script src="script.js"></script>
+  <script src="map.js"></script>
+<script
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBkMDgWiTAvqFtWMBK7nUEO-n3aeDxMS6o&callback=initMap"
+  async
+  defer
+></script>
+
+</body>
+</html>
