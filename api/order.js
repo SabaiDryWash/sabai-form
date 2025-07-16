@@ -1,7 +1,7 @@
 // /api/order.js (Vercel API backend สำหรับรับข้อมูลออเดอร์ และส่ง Flex Message ไปที่ LINE)
 // ⭐️ ต้องตั้ง Environment Variables ใน Vercel ชื่อ LINE_TOKEN, ADMIN_GROUP_ID ก่อน deploy!
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // ⭐️ อนุญาตแค่ POST เท่านั้น (ป้องกัน request แปลกๆ)
   if (req.method !== "POST")
     return res.status(405).json({ result: "error", message: "Method not allowed" });
