@@ -66,3 +66,11 @@ export default async function handler(req, res) {
   // ⭐️ ส่งสถานะกลับไปให้ frontend (แจ้งว่าสำเร็จ)
   res.status(200).json({ result: "success" });
 }
+
+export default async function handler(req, res) {
+  console.log("API CALLED:", req.method);
+  if (req.method !== "POST")
+    return res.status(405).json({ result: "error", message: "Method not allowed" });
+  console.log("DATA:", req.body);
+  // ...
+}
